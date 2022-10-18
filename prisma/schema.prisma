@@ -22,21 +22,21 @@ model Customers {
 model PurchaseTransaction {
   id             Int      @id @default(autoincrement())
   customer_id    Int
-  total_spent    Decimal
-  total_saving   Decimal
+  total_spent    Decimal @db.Decimal(65, 2)
+  total_saving   Decimal @db.Decimal(65, 2)
   transaction_at DateTime
 }
 
 model VoucherTransactions {
   id          Int      @id @default(autoincrement())
-  voucher_id Int
   customer_id Int
   purchase_id Int
   redeemed_at DateTime
+  voucher_id  Int
 }
 
 model Vouchers {
-  id          Int      @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   voucher_code String
-  value Decimal
+  value        Decimal @db.Decimal(65, 2)
 }

@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Customers {
+  id             Int       @id @default(autoincrement())
+  first_name     String
+  last_name      String
+  gender         String
+  date_of_birth  DateTime
+  contact_number String
+  email          String
+  created_at     DateTime? @default(now())
+  updated_at     DateTime?
+}
+
+model PurchaseTransaction {
+  id             Int      @id @default(autoincrement())
+  customer_id    Int
+  total_spent    Decimal
+  total_saving   Decimal
+  transaction_at DateTime
+}
+
+model VoucherTransactions {
+  id          Int      @id @default(autoincrement())
+  voucher_id Int
+  customer_id Int
+  purchase_id Int
+  redeemed_at DateTime
+}
+
+model Vouchers {
+  id          Int      @id @default(autoincrement())
+  voucher_code String
+  value Decimal
+}

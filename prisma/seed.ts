@@ -38,7 +38,7 @@ const main = async () => {
         last_name: lastName,
         gender,
         contact_number: String(phoneNumber),
-        email: `${firstName}${mailDomain}`,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${Math.floor(Math.random() * 999)}${mailDomain}`,
         date_of_birth: birthDate,
       },
     });

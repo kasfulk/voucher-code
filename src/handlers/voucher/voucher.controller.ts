@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import VoucherServices from './voucher.services';
-// import { JalanTypes } from './jalan.types';
 
 export default class VoucherController {
   public path = '/voucher';

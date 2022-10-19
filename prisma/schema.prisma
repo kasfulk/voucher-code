@@ -8,35 +8,43 @@ datasource db {
 }
 
 model Customers {
-  id             Int       @id @default(autoincrement())
-  first_name     String
-  last_name      String
-  gender         String
-  date_of_birth  DateTime
-  contact_number String
-  email          String
-  created_at     DateTime? @default(now())
-  updated_at     DateTime?
+  id                  Int                   @id @default(autoincrement())
+  first_name          String
+  last_name           String
+  gender              String
+  date_of_birth       DateTime
+  contact_number      String
+  email               String
+  created_at          DateTime?             @default(now())
+  updated_at          DateTime?
+  PurchaseTransaction PurchaseTransaction[]
+  VoucherTransactions VoucherTransactions[]
 }
 
 model PurchaseTransaction {
-  id             Int      @id @default(autoincrement())
-  customer_id    Int
-  total_spent    Decimal @db.Decimal(65, 2)
-  total_saving   Decimal @db.Decimal(65, 2)
-  transaction_at DateTime
+  id                   Int                   @id @default(autoincrement())
+  customer_id          Int
+  total_spent          Decimal               @db.Decimal(65, 2)
+  total_saving         Decimal               @db.Decimal(65, 2)
+  transaction_at       DateTime
+  customer             Customers             @relation(fields: [customer_id], references: [id])
+  VoucherTransasctions VoucherTransactions[]
 }
 
 model VoucherTransactions {
-  id          Int      @id @default(autoincrement())
+  id          Int                 @id @default(autoincrement())
   customer_id Int
   purchase_id Int
   redeemed_at DateTime
   voucher_id  Int
+  customer    Customers           @relation(fields: [customer_id], references: [id])
+  purchase    PurchaseTransaction @relation(fields: [purchase_id], references: [id])
+  Vouchers    Vouchers            @relation(fields: [voucher_id], references: [id])
 }
 
 model Vouchers {
-  id           Int     @id @default(autoincrement())
-  voucher_code String
-  value        Decimal @db.Decimal(65, 2)
+  id                  Int                   @id @default(autoincrement())
+  voucher_code        String
+  value               Decimal               @db.Decimal(65, 2)
+  VoucherTransactions VoucherTransactions[]
 }

@@ -16,4 +16,13 @@ export default class VoucherServices {
     });
     res.send(result);
   };
+
+  validateCustomer = async (req: Request, res: Response): Promise<void> => {
+    if (!req.file) {
+      res.status(400).send({
+        message: 'Terdapat kesalahan pada upload!',
+      });
+    }
+    res.send(null);
+  }
 }

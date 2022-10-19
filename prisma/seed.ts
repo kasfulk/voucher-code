@@ -17,6 +17,16 @@ const randomString = (length: number) => {
   }
   return result;
 };
+const randomNumber = (length: number) => {
+  let result = '';
+  const characters = '0123456789';
+  const charactersLength = characters.length;
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
 
 const main = async () => {
   const createCustomers = async () => {
@@ -25,10 +35,11 @@ const main = async () => {
     const lastName = listName[Math.floor(Math.random() * listName.length)];
     const gender = genders[Math.floor(Math.random() * genders.length)];
     const birthDate = randomDate(new Date(1965, 0, 1), new Date(1998, 0, 1));
-    const phoneNumber = Math.floor(Math.random() * 20);
+    const phoneNumber = randomNumber(12);
 
     await prisma.$queryRaw`TRUNCATE TABLE Customers`;
     await prisma.$queryRaw`TRUNCATE TABLE Vouchers`;
+    await prisma.$queryRaw`TRUNCATE TABLE PurchaseTransaction`;
 
     const customerQuery = await prisma.customers.upsert({
       where: { id: 0 },
@@ -37,7 +48,7 @@ const main = async () => {
         first_name: firstName,
         last_name: lastName,
         gender,
-        contact_number: String(phoneNumber),
+        contact_number: phoneNumber,
         email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${Math.floor(Math.random() * 999)}${mailDomain}`,
         date_of_birth: birthDate,
       },

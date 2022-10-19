@@ -57,21 +57,29 @@ export default class VoucherServices {
 
   getId = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const result = await this.prisma.vouchers.findFirstOrThrow({
-      where: {
-        OR: [
-          { id: isNaN(Number(id)) ? 0 : Number(id) },
-          { voucher_code: id },
-        ],
-      },
-    });
-    const voucherValid = await this.checkVoucherValid(result.voucher_code);
-    if (!result) {
-      res.status(404).send({
-        message: 'Data not found!',
+    try {
+      const result = await this.prisma.vouchers.findFirstOrThrow({
+        where: {
+          OR: [
+            { id: isNaN(Number(id)) ? 0 : Number(id) },
+            { voucher_code: id },
+          ],
+        },
       });
+      const voucherValid = await this.checkVoucherValid(result.voucher_code);
+      if (!result) {
+        res.status(404).send({
+          message: 'Data not found!',
+        });
+      }
+      res.send({ ...result, is_valid: voucherValid });
+    } catch (error) {
+      if (error.name === 'NotFoundError') {
+        res.status(404).send(error);
+        return;
+      }
+      res.status(500).send(error);
     }
-    res.send({ ...result, is_valid: voucherValid });
   };
 
   getEligible = async (req:Request, res: Response) => {

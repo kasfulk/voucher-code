@@ -20,6 +20,7 @@ export default class App {
     }
 
     private initializeController(controllers:any):void {
+      this.app.use('/public/', express.static('public'));
       controllers.forEach((controller:any) => {
         this.app.use('/', controller.router);
       });

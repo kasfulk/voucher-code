@@ -1,5 +1,12 @@
 node_modules/
+prisma/migrations/
 .env
 .DS_store
 package-lock.json
 dist/
+*.png
+*.jpeg
+*.jpg
+*.bmp
+*.webp
+*.gif

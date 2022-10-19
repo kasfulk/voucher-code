@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "start": "ts-node src/server.ts",
-    "dev": "nodemon -w src/server.ts",
+    "dev": "nodemon --watch 'src/**' --ext 'ts,json' --ignore 'src/**/*.spec.ts' --exec 'ts-node src/server.ts'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "prisma": {
@@ -16,8 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "module-alias": "^2.2.2",
-    "mysql2": "^2.3.0"
+    "module-alias": "^2.2.2"
   },
   "_moduleAliases": {
     "@services": "src/services",

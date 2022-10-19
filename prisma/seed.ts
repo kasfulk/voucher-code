@@ -37,9 +37,10 @@ const main = async () => {
     const birthDate = randomDate(new Date(1965, 0, 1), new Date(1998, 0, 1));
     const phoneNumber = randomNumber(12);
 
-    await prisma.$queryRaw`TRUNCATE TABLE Customers`;
-    await prisma.$queryRaw`TRUNCATE TABLE Vouchers`;
-    await prisma.$queryRaw`TRUNCATE TABLE PurchaseTransaction`;
+    await prisma.voucherTransactions.deleteMany();
+    await prisma.purchaseTransaction.deleteMany();
+    await prisma.customers.deleteMany();
+    await prisma.vouchers.deleteMany();
 
     const customerQuery = await prisma.customers.upsert({
       where: { id: 0 },
@@ -65,6 +66,9 @@ const main = async () => {
       create: {
         voucher_code: voucherCode,
         value: Math.floor(((Math.random() * 500) / 10) * 10),
+        start_time: randomDate(new Date(2022, 1, 1), new Date()),
+        // eslint-disable-next-line max-len
+        end_time: randomDate(new Date(new Date().getFullYear(), new Date().getMonth() - 2, new Date().getDay()), new Date(2022, 12, 20)),
       },
     });
     console.log(voucherQuery);

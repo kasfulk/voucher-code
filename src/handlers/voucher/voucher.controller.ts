@@ -14,6 +14,7 @@ export default class VoucherController {
 
   public initializeRoutes(): void {
     this.router.get(this.path, this.voucherService.getAll);
+    this.router.get(`${this.path}/check-eligible`, this.voucherService.getEligible);
     this.router.get(`${this.path}/:id`, this.voucherService.getId);
   }
 }

@@ -21,6 +21,7 @@
           "@typescript-eslint/no-use-before-define": "warn",
           "import/no-unresolved": "off",
           "import/extensions": "off",
-          "camelcase":"off"
+          "camelcase":"off",
+          "no-restricted-globals":"off"
     }
 }

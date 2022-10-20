@@ -29,7 +29,6 @@ export default class CustomerServices {
       });
       const checkEligible = await this.voucher.checkEligible(Number(id));
       const checkLocked = await this.voucher.checkLocked(Number(id));
-      console.log(result);
       res.send({
         ...result,
         is_eligible: checkEligible.length > 0,
@@ -59,6 +58,7 @@ export default class CustomerServices {
     const [
       checkEligible,
       voucherData,
+      checkLocked,
     ] = await Promise.all([
       this.voucher.checkEligible(Number(customer_id)),
       this.prisma.$queryRaw(
@@ -80,6 +80,7 @@ export default class CustomerServices {
                     id 
                     LIMIT 1`,
       ),
+      this.voucher.checkLocked(Number(customer_id)),
     ]);
 
     const isEligble = checkEligible.length > 0;
@@ -95,7 +96,23 @@ export default class CustomerServices {
 
     if (!Number(face_recognition)) {
       res.send({
-        message: 'Problem with face recognition!',
+        message: 'Face is in invalid recognition!',
+      });
+      await fs.unlink(req.file.path);
+      return;
+    }
+
+    if (!availableVouchercode) {
+      res.send({
+        message: 'The campaign are finished, all voucher are gone!',
+      });
+      await fs.unlink(req.file.path);
+      return;
+    }
+
+    if (checkLocked.length > 0) {
+      res.send({
+        message: 'Voucher was locked! if you want to validate, please wait 10 minutes for validating again.',
       });
       await fs.unlink(req.file.path);
       return;
@@ -107,10 +124,11 @@ export default class CustomerServices {
       },
       data: {
         locked_at: dbTime.TimeNow,
+        locked_by: Number(customer_id),
       },
       select: {
         voucher_code: true,
-        locked_by: true,
+        customer_locked: true,
       },
     });
 
@@ -166,7 +184,6 @@ export default class CustomerServices {
       }),
       this.voucher.checkLockedCustomer(Number(customer_id), voucher_code),
     ]);
-    console.log(checkLocked);
 
     const isEligble = checkEligible.length > 0;
 
@@ -205,7 +222,7 @@ export default class CustomerServices {
       return;
     }
 
-    if (checkLocked.length > 0) {
+    if (checkLocked.length === 0) {
       res.send({
         message: 'Voucher is locked down by another customer or submission exceed more than 10 minutes!',
       });
@@ -233,7 +250,7 @@ export default class CustomerServices {
     });
 
     res.send({
-      message: 'The Voucher ',
+      message: 'The Voucher has been redeemed',
       data: { voucherTx },
     });
   }

@@ -37,7 +37,6 @@ export default class VoucherServices {
         },
       },
     });
-    console.log(result);
     return result;
   }
 
@@ -56,7 +55,6 @@ export default class VoucherServices {
            },
          },
        });
-       console.log(result);
        return result;
      }
 
@@ -84,7 +82,13 @@ export default class VoucherServices {
   }
 
   getAll = async (req: Request, res: Response): Promise<void> => {
-    const results = await this.prisma.vouchers.findMany();
+    const results = await this.prisma.vouchers.findMany({
+      where: {
+        locked_at: null,
+        locked_by: null,
+      },
+      take: 10,
+    });
     res.send(results);
   };
 

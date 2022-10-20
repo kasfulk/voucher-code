@@ -29,6 +29,7 @@ const randomNumber = (length: number) => {
 };
 
 const main = async () => {
+  const customerIds: number[] = [];
   const createCustomers = async () => {
     const firstName = listName[Math.floor(Math.random() * listName.length)];
     const mailDomain = mailDomains[Math.floor(Math.random() * mailDomains.length)];
@@ -54,6 +55,7 @@ const main = async () => {
         date_of_birth: birthDate,
       },
     });
+    customerIds.push(customerQuery.id);
     console.log(customerQuery);
   };
 
@@ -73,14 +75,14 @@ const main = async () => {
     });
     console.log(voucherQuery);
   };
-  const createPurchaseTransactions = async (dataLength:number) => {
+  const createPurchaseTransactions = async () => {
     const transactionDate = randomDate(new Date(2022, 3, 1), new Date());
 
     const purchaseQuery = await prisma.purchaseTransaction.upsert({
       where: { id: 0 },
       update: {},
       create: {
-        customer_id: Math.floor(Math.random() * dataLength),
+        customer_id: customerIds[Math.floor(Math.random() * customerIds.length)],
         total_spent: Math.floor(Math.random() * 100),
         total_saving: Math.floor(Math.random() * 100),
         transaction_at: transactionDate,
@@ -109,7 +111,7 @@ const main = async () => {
 
   // create 1500 transactions
   for (let i = 0; i < 1500;) {
-    createPurchaseTransactionsPools.push(createPurchaseTransactions(createCustomersPools.length));
+    createPurchaseTransactionsPools.push(createPurchaseTransactions());
     i += 1;
   }
   await Promise.all(createPurchaseTransactionsPools);

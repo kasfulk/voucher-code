@@ -47,4 +47,4 @@ Here it's API documentation for voucher validation.
 
 | Platform | URL |
 | ------ | ------ |
-| Postman | [https://documenter.getpostman.com/view/14628291/2s847MsBD1][PlDb] |
+| Postman | https://documenter.getpostman.com/view/14628291/2s847MsBD1 |

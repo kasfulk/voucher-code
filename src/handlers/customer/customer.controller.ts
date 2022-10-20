@@ -8,7 +8,8 @@ export default class CustomerController {
   public storage = multer.diskStorage({
     destination: 'public/uploads',
     filename(req: Request, file: Express.Multer.File, callback:any) {
-      callback(null, file.originalname);
+      const microtime = Date.now();
+      callback(null, `${microtime}_${file.originalname}`);
     },
   })
 
@@ -35,6 +36,7 @@ export default class CustomerController {
   public initializeRoutes(): void {
     this.router.get(this.path, this.customerService.getAll);
     this.router.get(`${this.path}/:id`, this.customerService.getId);
-    this.router.post(`${this.path}/validate/:id`, this.upload.single('photo'), this.customerService.validateCustomer);
+    this.router.post(`${this.path}/:id/validate`, this.upload.single('photo'), this.customerService.validateCostumer);
+    this.router.post(`${this.path}/:id/redeem-voucher`, this.customerService.redeemVoucherCustomer);
   }
 }

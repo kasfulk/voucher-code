@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import fs from 'fs/promises';
 import VoucherServices from '../voucher/voucher.services';
 
 export default class CustomerServices {
@@ -27,8 +28,13 @@ export default class CustomerServices {
         },
       });
       const checkEligible = await this.voucher.checkEligible(Number(id));
+      const checkLocked = await this.voucher.checkLocked(Number(id));
       console.log(result);
-      res.send({ ...result, is_eligible: checkEligible.length > 0 });
+      res.send({
+        ...result,
+        is_eligible: checkEligible.length > 0,
+        lockedVoucher: { ...checkLocked[0] },
+      });
     } catch (error) {
       if (error.name === 'NotFoundError') {
         res.status(404).send(error);
@@ -38,12 +44,197 @@ export default class CustomerServices {
     }
   };
 
-  validateCustomer = async (req: Request, res: Response): Promise<void> => {
+  validateCostumer = async (req: Request, res: Response): Promise<void> => {
+    const { face_recognition } = req.body;
+    const { id: customer_id } = req.params;
+    const [dbTime]: any = await this.prisma.$queryRaw`SELECT NOW() TimeNow`;
+
     if (!req.file) {
-      res.status(400).send({
-        message: 'Terdapat kesalahan pada upload!',
+      res.status(422).send({
+        message: 'Problem in uploading file!',
       });
+      return;
     }
-    res.send(null);
+
+    const [
+      checkEligible,
+      voucherData,
+    ] = await Promise.all([
+      this.voucher.checkEligible(Number(customer_id)),
+      this.prisma.$queryRaw(
+        Prisma.sql`SELECT
+                    * 
+                  FROM
+                    Vouchers 
+                  WHERE
+                    id NOT IN ( SELECT voucher_id FROM VoucherTransactions ) 
+                    AND id NOT IN (
+                    SELECT
+                      id 
+                    FROM
+                      Vouchers 
+                    WHERE
+                      locked_at BETWEEN SUBDATE( NOW(), INTERVAL 10 MINUTE ) 
+                    AND NOW()) 
+                  ORDER BY
+                    id 
+                    LIMIT 1`,
+      ),
+    ]);
+
+    const isEligble = checkEligible.length > 0;
+    const availableVouchercode = voucherData[0];
+
+    if (!isEligble) {
+      res.send({
+        message: 'Customer is not eligible for participating!',
+      });
+      await fs.unlink(req.file.path);
+      return;
+    }
+
+    if (!Number(face_recognition)) {
+      res.send({
+        message: 'Problem with face recognition!',
+      });
+      await fs.unlink(req.file.path);
+      return;
+    }
+
+    const lockTheVoucher = await this.prisma.vouchers.update({
+      where: {
+        id: Number(availableVouchercode.id),
+      },
+      data: {
+        locked_at: dbTime.TimeNow,
+      },
+      select: {
+        voucher_code: true,
+        locked_by: true,
+      },
+    });
+
+    res.send(lockTheVoucher);
+  }
+
+  redeemVoucherCustomer = async (req: Request, res: Response): Promise<void> => {
+    const { voucher_code, purchase_id } = req.body;
+    const { id: customer_id } = req.params;
+
+    if (!voucher_code || !purchase_id) {
+      res.status(422).send({
+        message: 'Invalid request!',
+      });
+      return;
+    }
+
+    const [
+      checkEligible,
+      checkVoucherValid,
+      voucherData,
+      purchaseData,
+      findVoucherTransaction,
+      findVoucherCustTransaction,
+      checkLocked,
+    ] = await Promise.all([
+      this.voucher.checkEligible(Number(customer_id)),
+      this.voucher.checkVoucherValid(voucher_code),
+      this.prisma.vouchers.findFirst({
+        where: {
+          voucher_code,
+        },
+      }),
+      this.prisma.purchaseTransaction.findMany({
+        where: {
+          customer_id: Number(customer_id),
+          id: Number(purchase_id),
+        },
+      }),
+      this.prisma.voucherTransactions.findMany({
+        where: {
+          Vouchers: {
+            voucher_code,
+          },
+        },
+      }),
+      this.prisma.voucherTransactions.findMany({
+        where: {
+          customer: {
+            id: Number(customer_id),
+          },
+        },
+      }),
+      this.voucher.checkLockedCustomer(Number(customer_id), voucher_code),
+    ]);
+    console.log(checkLocked);
+
+    const isEligble = checkEligible.length > 0;
+
+    if (purchaseData.length === 0) {
+      res.send({
+        message: 'Purchase is not found on this customer!',
+      });
+      return;
+    }
+
+    if (findVoucherTransaction.length > 0) {
+      res.send({
+        message: 'Voucher was redeemed!',
+      });
+      return;
+    }
+
+    if (findVoucherCustTransaction.length > 0) {
+      res.send({
+        message: 'This customer was redeemed a voucher!',
+      });
+      return;
+    }
+
+    if (!isEligble) {
+      res.send({
+        message: 'Customer is not eligible for participating!',
+      });
+      return;
+    }
+
+    if (!checkVoucherValid) {
+      res.send({
+        message: 'Voucher is not valid!',
+      });
+      return;
+    }
+
+    if (checkLocked.length > 0) {
+      res.send({
+        message: 'Voucher is locked down by another customer or submission exceed more than 10 minutes!',
+      });
+      return;
+    }
+
+    // prisma bug, can't get time with equal timezone
+    const [dbTime]: any = await this.prisma.$queryRaw`SELECT NOW() TimeNow`;
+
+    // redeem voucher
+    const voucherTx = await this.prisma.voucherTransactions.upsert({
+      where: { id: 0 },
+      update: {},
+      create: {
+        customer_id: Number(customer_id),
+        voucher_id: voucherData.id,
+        purchase_id: Number(purchase_id),
+        redeemed_at: dbTime.TimeNow,
+      },
+      select: {
+        Vouchers: true,
+        customer: true,
+        purchase: true,
+      },
+    });
+
+    res.send({
+      message: 'The Voucher ',
+      data: { voucherTx },
+    });
   }
 }

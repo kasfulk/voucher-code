@@ -68,7 +68,7 @@ const main = async () => {
         value: Math.floor(((Math.random() * 500) / 10) * 10),
         start_time: randomDate(new Date(2022, 1, 1), new Date()),
         // eslint-disable-next-line max-len
-        end_time: randomDate(new Date(new Date().getFullYear(), new Date().getMonth() - 2, new Date().getDay()), new Date(2022, 12, 20)),
+        end_time: randomDate(new Date(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDay()), new Date(2022, 12, 20)),
       },
     });
     console.log(voucherQuery);

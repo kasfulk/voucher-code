@@ -19,6 +19,7 @@ model Customers {
   updated_at          DateTime?
   PurchaseTransaction PurchaseTransaction[]
   VoucherTransactions VoucherTransactions[]
+  Vouchers            Vouchers[]
 }
 
 model PurchaseTransaction {
@@ -34,14 +35,14 @@ model PurchaseTransaction {
 }
 
 model VoucherTransactions {
-  id          Int                 @id @default(autoincrement())
-  customer_id Int
-  purchase_id Int
-  redeemed_at DateTime
-  voucher_id  Int
-  customer    Customers           @relation(fields: [customer_id], references: [id])
-  purchase    PurchaseTransaction @relation(fields: [purchase_id], references: [id])
-  Vouchers    Vouchers            @relation(fields: [voucher_id], references: [id])
+  id            Int                 @id @default(autoincrement())
+  customer_id   Int
+  purchase_id   Int
+  redeemed_at   DateTime?           @default(now())
+  voucher_id    Int
+  customer      Customers           @relation(fields: [customer_id], references: [id])
+  purchase      PurchaseTransaction @relation(fields: [purchase_id], references: [id])
+  Vouchers      Vouchers            @relation(fields: [voucher_id], references: [id])
 
   @@index([customer_id], map: "VoucherTransactions_customer_id_fkey")
   @@index([purchase_id], map: "VoucherTransactions_purchase_id_fkey")
@@ -52,7 +53,10 @@ model Vouchers {
   id                  Int                   @id @default(autoincrement())
   voucher_code        String                @unique
   value               Decimal               @db.Decimal(65, 2)
+  locked_by           Int?
+  locked_at           DateTime?
   end_time            DateTime
   start_time          DateTime
+  customer_locked     Customers?             @relation(fields: [locked_by], references: [id])
   VoucherTransactions VoucherTransactions[]
 }

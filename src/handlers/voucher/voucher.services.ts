@@ -4,9 +4,8 @@ import { Prisma, PrismaClient } from '@prisma/client';
 export default class VoucherServices {
   private prisma = new PrismaClient()
 
-  checkEligible = async (customerId: number) => {
-    const checkEligible: any[] = await this.prisma.$queryRaw(
-      Prisma.sql`SELECT
+  checkEligible = async (customerId: number): Promise<any[]> => this.prisma.$queryRaw(
+    Prisma.sql`SELECT
             COUNT( a.id ) completed_total_transaction,
             ROUND(
             SUM( total_spent ) + SUM( total_saving )) total_transaction,
@@ -24,9 +23,42 @@ export default class VoucherServices {
           HAVING
             COUNT( a.id ) >= 3 
             AND SUM( total_spent ) + SUM( total_saving ) >= 100`,
-    );
-    return checkEligible;
+  )
+
+  checkLocked = async (customer_id: number): Promise<any[]> => {
+    const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
+    const result = await this.prisma.vouchers.findMany({
+      where: {
+        customer_locked: {
+          id: customer_id,
+        },
+        locked_at: {
+          gte: dbTime.TenMinute,
+        },
+      },
+    });
+    console.log(result);
+    return result;
   }
+
+  checkLockedCustomer =
+     // eslint-disable-next-line max-len
+     async (customer_id: number, voucher_code: string): Promise<any[]> => {
+       const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
+       const result = await this.prisma.vouchers.findMany({
+         where: {
+           customer_locked: {
+             id: customer_id,
+           },
+           voucher_code,
+           locked_at: {
+             gte: dbTime.TenMinute,
+           },
+         },
+       });
+       console.log(result);
+       return result;
+     }
 
   checkVoucherValid = async (voucherCode: string) => {
     try {
@@ -41,6 +73,7 @@ export default class VoucherServices {
           },
         },
       });
+
       if (result.length > 0) {
         return true;
       }
@@ -64,6 +97,10 @@ export default class VoucherServices {
             { id: isNaN(Number(id)) ? 0 : Number(id) },
             { voucher_code: id },
           ],
+        },
+        select: {
+          voucher_code: true,
+          customer_locked: true,
         },
       });
       const voucherValid = await this.checkVoucherValid(result.voucher_code);

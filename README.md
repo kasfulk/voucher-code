@@ -1,19 +1,50 @@
 # Voucher Code Validation
-Typescript, Express, Prisma
 
-clone this repository
-change directory to cloned repository
+Voucher validation is application builded from Typescript for celebration campaign to give away 1000
+pieces of cash vouchers to its loyal customers.
 
-copy example of environment from ```.env.example``` into ```.env``` and set environtment through ```.env```
+## Features
 
-after that run this command
-###```npm install```
-###```npx prisma generate```
-###```npx prisma migrate dev```
+- Show customers.
+- Show Available vouchers.
+- Check eligiblity customer.
+- Validation a customer through endpoint.
+- Redeem a voucher with some validation.
 
+## Tech
 
-for run as development serve
-###```npm run dev```
+voucher validation uses a number of open source projects to work properly:
 
-for run as production serve
-###```npm run start```
+- [ExpressJS] - web application framework
+- [Prisma] - Next Generation ORM
+- [Multer] - File upload middleware.
+
+## Installation
+
+Voucher Validation requires [Node.js](https://nodejs.org/) v16+ to run.
+
+Install the dependencies and devDependencies and start the server.
+
+```sh
+npm install
+npx prisma generate
+npx prisma migrate dev
+```
+
+For running as development serve.
+```sh
+npm run dev
+```
+
+For running as development serve.
+```sh
+npm run start
+```
+
+## API Documentation
+
+Here it's API documentation for voucher validation.
+
+| Platform | URL |
+| ------ | ------ |
+| Postman | [https://documenter.getpostman.com/view/14628291/2s847MsBD1][PlDb] |

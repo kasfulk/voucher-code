@@ -29,6 +29,7 @@ Install the dependencies and devDependencies and start the server.
 npm install
 npx prisma generate
 npx prisma migrate dev
+npx prisma db seed
 ```
 
 For running as development serve.

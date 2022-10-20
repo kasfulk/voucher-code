@@ -8,7 +8,7 @@ export default class VoucherServices {
     Prisma.sql`SELECT
             COUNT( a.id ) completed_total_transaction,
             ROUND(
-            SUM( total_spent ) + SUM( total_saving )) total_transaction,
+            SUM( total_spent )) total_transaction,
             a.customer_id 
           FROM
             PurchaseTransaction a
@@ -22,40 +22,48 @@ export default class VoucherServices {
             customer_id 
           HAVING
             COUNT( a.id ) >= 3 
-            AND SUM( total_spent ) + SUM( total_saving ) >= 100`,
+            AND SUM( total_spent ) >= 100`,
   )
 
   checkLocked = async (customer_id: number): Promise<any[]> => {
-    const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
-    const result = await this.prisma.vouchers.findMany({
-      where: {
-        customer_locked: {
-          id: customer_id,
+    try {
+      const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
+      const result = await this.prisma.vouchers.findMany({
+        where: {
+          customer_locked: {
+            id: customer_id,
+          },
+          locked_at: {
+            gte: dbTime.TenMinute,
+          },
         },
-        locked_at: {
-          gte: dbTime.TenMinute,
-        },
-      },
-    });
-    return result;
+      });
+      return result;
+    } catch (error) {
+      return error;
+    }
   }
 
   checkLockedCustomer =
      // eslint-disable-next-line max-len
      async (customer_id: number, voucher_code: string): Promise<any[]> => {
-       const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
-       const result = await this.prisma.vouchers.findMany({
-         where: {
-           customer_locked: {
-             id: customer_id,
+       try {
+         const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
+         const result = await this.prisma.vouchers.findMany({
+           where: {
+             customer_locked: {
+               id: customer_id,
+             },
+             voucher_code,
+             locked_at: {
+               gte: dbTime.TenMinute,
+             },
            },
-           voucher_code,
-           locked_at: {
-             gte: dbTime.TenMinute,
-           },
-         },
-       });
-       return result;
+         });
+         return result;
+       } catch (error) {
+         return error;
+       }
      }
 
   checkVoucherValid = async (voucherCode: string) => {
@@ -82,14 +90,18 @@ export default class VoucherServices {
   }
 
   getAll = async (req: Request, res: Response): Promise<void> => {
-    const results = await this.prisma.vouchers.findMany({
-      where: {
-        locked_at: null,
-        locked_by: null,
-      },
-      take: 10,
-    });
-    res.send(results);
+    try {
+      const results = await this.prisma.vouchers.findMany({
+        where: {
+          locked_at: null,
+          locked_by: null,
+        },
+        take: 10,
+      });
+      res.send(results);
+    } catch (error) {
+      res.status(500).send(error);
+    }
   };
 
   getId = async (req: Request, res: Response): Promise<void> => {

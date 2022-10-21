@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient, Vouchers } from '@prisma/client';
+import { TimeDB } from 'src/types/time.types';
+import { Eligible } from './voucher.types';
 
 export default class VoucherServices {
   private prisma = new PrismaClient()
 
-  checkEligible = async (customerId: number): Promise<any[]> => this.prisma.$queryRaw(
+  checkEligible = async (customerId: number): Promise<Eligible[]> => this.prisma.$queryRaw(
     Prisma.sql`SELECT
             COUNT( a.id ) completed_total_transaction,
             ROUND(
@@ -25,9 +27,9 @@ export default class VoucherServices {
             AND SUM( total_spent ) >= 100`,
   )
 
-  checkLocked = async (customer_id: number): Promise<any[]> => {
+  checkLocked = async (customer_id: number): Promise<Vouchers[]> => {
     try {
-      const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
+      const [dbTime]: TimeDB[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
       const result = await this.prisma.vouchers.findMany({
         where: {
           customer_locked: {
@@ -46,9 +48,9 @@ export default class VoucherServices {
 
   checkLockedCustomer =
      // eslint-disable-next-line max-len
-     async (customer_id: number, voucher_code: string): Promise<any[]> => {
+     async (customer_id: number, voucher_code: string): Promise<Vouchers[]> => {
        try {
-         const [dbTime]: any[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
+         const [dbTime]: TimeDB[] = await this.prisma.$queryRaw`SELECT SUBDATE( NOW(), INTERVAL 10 MINUTE ) TenMinute, NOW() TimeNow`;
          const result = await this.prisma.vouchers.findMany({
            where: {
              customer_locked: {
@@ -68,7 +70,7 @@ export default class VoucherServices {
 
   checkVoucherValid = async (voucherCode: string) => {
     try {
-      const result: any[] = await this.prisma.vouchers.findMany({
+      const result: Vouchers[] = await this.prisma.vouchers.findMany({
         where: {
           voucher_code: voucherCode,
           start_time: {

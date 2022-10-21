@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Prisma, PrismaClient } from '@prisma/client';
 import fs from 'fs/promises';
+import { TimeDB } from 'src/types/time.types';
 import VoucherServices from '../voucher/voucher.services';
 
 export default class CustomerServices {
@@ -51,7 +52,7 @@ export default class CustomerServices {
     try {
       const { face_recognition } = req.body;
       const { id: customer_id } = req.params;
-      const [dbTime]: any = await this.prisma.$queryRaw`SELECT NOW() TimeNow`;
+      const [dbTime]: TimeDB[] = await this.prisma.$queryRaw`SELECT NOW() TimeNow`;
 
       if (!req.file) {
         res.status(422).send({
@@ -239,7 +240,7 @@ export default class CustomerServices {
       }
 
       // prisma bug, can't get time with equal timezone
-      const [dbTime]: any = await this.prisma.$queryRaw`SELECT NOW() TimeNow`;
+      const [dbTime]: TimeDB[] = await this.prisma.$queryRaw`SELECT NOW() TimeNow`;
 
       // redeem voucher
       const voucherTx = await this.prisma.voucherTransactions.upsert({

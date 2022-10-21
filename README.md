@@ -32,7 +32,7 @@ npx prisma migrate dev
 npx prisma db seed
 ```
 
-To serve in development.
+How to serve in development stage.
 ```sh
 npm run dev
 ```
